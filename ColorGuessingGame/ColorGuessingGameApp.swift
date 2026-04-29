@@ -12,6 +12,7 @@ struct ColorGuessingGameApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+            Text("Welcome to the Color guessing game!")
         }
     }
 }
