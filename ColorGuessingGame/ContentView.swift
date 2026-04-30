@@ -9,14 +9,6 @@ import SwiftUI
 import UIKit
 internal import Combine
 
-struct ColorAssociation: Identifiable, Codable {
-    var id = UUID()
-    //UUID!
-    var baseHue: Double
-    var tolerance: Double
-    var text: String
-}
-
 class ColorViewModel: ObservableObject {
     
     @Published var associations: [ColorAssociation] = [] {
