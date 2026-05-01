@@ -7,35 +7,72 @@
 
 import SwiftUI
 import UIKit
-internal import Combine
+import Combine
+
+final class ScoreModel: ObservableObject {
+    @Published var score: Int = 0
+}
+
+//Main Menu View
+
+struct MainMenuView: View {
+    @EnvironmentObject var scoreModel: ScoreModel
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                Text("Welcome to the Color Guessing Game")
+                    .font(.largeTitle)
+                    .bold()
+                    .multilineTextAlignment(.center)
+
+                Text("Score: \(scoreModel.score)")
+                    .font(.title2)
+
+                NavigationLink {
+                    ContentView()
+                        .environmentObject(scoreModel)
+                } label: {
+                    Text("Play")
+                        .font(.title2)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(.blue)
+                        .foregroundStyle(.white)
+                        .clipShape(Capsule())
+                }
+            }
+            .padding()
+        }
+    }
+}
 
 class ColorViewModel: ObservableObject {
-    
     @Published var associations: [ColorAssociation] = [] {
         didSet { saveAssociations() }
     }
-    
+
     private let key = "savedColorAssociations"
-    
+
     init() { loadAssociations() }
-    
+
     func addAssociation(baseHue: Double, tolerance: Double, text: String) {
         let new = ColorAssociation(baseHue: baseHue,
                                    tolerance: tolerance,
                                    text: text)
         associations.append(new)
     }
-    
+
     func delete(at offsets: IndexSet) {
         associations.remove(atOffsets: offsets)
     }
-    
+
     private func saveAssociations() {
         if let encoded = try? JSONEncoder().encode(associations) {
             UserDefaults.standard.set(encoded, forKey: key)
         }
     }
-    
+
     private func loadAssociations() {
         if let data = UserDefaults.standard.data(forKey: key),
            let decoded = try? JSONDecoder().decode([ColorAssociation].self, from: data) {
@@ -47,9 +84,8 @@ class ColorViewModel: ObservableObject {
 //Main View
 
 struct ContentView: View {
-    
+    @EnvironmentObject private var scoreModel: ScoreModel
     @StateObject private var viewModel = ColorViewModel()
-    
     @State private var selectedColor: Color = .orange
     @State private var hexValue: String = "#FFA500"
     
@@ -271,5 +307,7 @@ extension Color {
 }
 
 #Preview{
-    ContentView()
+    MainMenuView()
+        .environmentObject(ScoreModel())
 }
+
