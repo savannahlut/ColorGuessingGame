@@ -8,9 +8,11 @@
 import SwiftUI
 import Foundation
 
-struct ColorAttributes: Codable {
-    var R_Value: Int
-    var G_Value: Int
-    var B_Value: Int
-    var HexCode: String
+struct ColorResponse: Codable {
+    var images: [Images]
+}
+
+struct Images: Codable {
+    var bar: String
+    var named: String
 }
