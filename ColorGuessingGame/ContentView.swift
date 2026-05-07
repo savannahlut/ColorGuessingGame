@@ -13,6 +13,14 @@ final class ScoreModel: ObservableObject {
     @Published var score: Int = 0
 }
 
+struct StoredColor: Identifiable, Codable {
+    let id = UUID()
+    let red: Double
+    let green: Double
+    let blue: Double
+    let hex: String
+}
+
 //Main View
 
 struct ContentView: View {
@@ -20,6 +28,7 @@ struct ContentView: View {
     @StateObject private var viewModel = ColorViewModel()
     @State private var selectedColor: Color = .orange
     @State private var hexValue: String = "#FFA500"
+    @State private var storedColors: [StoredColor] = []
     
     @State private var customBaseColor: Color = .blue
     @State private var tolerance: Double = 20
@@ -37,12 +46,14 @@ struct ContentView: View {
                     Text("Guess The Color")
                         .font(.largeTitle)
                         .bold()
-                    
+                        .padding(.top, 8)
+
                     Spacer()
                     
                     ColorPicker("", selection: $selectedColor, supportsOpacity: false)
                         .labelsHidden()
                         .scaleEffect(5)
+                        .padding(.vertical, 12)
                         .onChange(of: selectedColor) { newColor in
                             hexValue = newColor.toHex() ?? "#000000"
                         }
@@ -51,15 +62,61 @@ struct ContentView: View {
 
                     Text("HEX: \(hexValue)")
                         .font(.headline)
+                        .padding(.bottom, 8)
                     
+                    Button("Guess") {
+                        let ui = UIColor(selectedColor)
+                        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+                        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+                        let entry = StoredColor(
+                            red: Double(r),
+                            green: Double(g),
+                            blue: Double(b),
+                            hex: hexValue
+                        )
+                        storedColors.append(entry)
+                    }
+                    .buttonStyle(.borderedProminent)
+
                     Divider()
-                        .overlay(selectedColor)
-                    
-                    TextField("Enter a guess...", text: $customText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                    
-                    Divider()
-                        .overlay(selectedColor)
+
+                    if storedColors.isEmpty {
+                        Text("No guesses yet. Tap Guess to store the current color.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Your Guesses")
+                                .font(.headline)
+
+                            ScrollView {
+                                LazyVStack(spacing: 12) {
+                                    ForEach(storedColors) { item in
+                                        HStack(spacing: 12) {
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(Color(red: item.red, green: item.green, blue: item.blue))
+                                                .frame(width: 44, height: 44)
+                                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(.secondary.opacity(0.4)))
+
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(item.hex)
+                                                    .font(.headline)
+                                                Text(String(format: "R: %.0f  G: %.0f  B: %.0f",
+                                                            item.red * 255, item.green * 255, item.blue * 255))
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                            Spacer()
+                                        }
+                                        .padding(8)
+                                        .background(.thinMaterial)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 100)
+                        }
+                    }
                 }
                 .padding()
             }
