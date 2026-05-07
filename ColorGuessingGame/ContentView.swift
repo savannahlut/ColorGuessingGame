@@ -25,6 +25,8 @@ struct ContentView: View {
     @State private var tolerance: Double = 20
     @State private var customText: String = ""
     
+    let difficulty: String
+    
     var body: some View {
         
         ZStack {
@@ -133,7 +135,7 @@ extension Color {
 }
 
 #Preview{
-    MainMenuView()
+    ContentView(difficulty: "Medium")
         .environmentObject(ScoreModel())
 }
 

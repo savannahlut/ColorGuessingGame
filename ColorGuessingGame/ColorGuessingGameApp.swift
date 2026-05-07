@@ -11,7 +11,7 @@ import SwiftUI
 struct ColorGuessingGameApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainMenuView()
             Text("Welcome to the Color guessing game!")
         }
     }
