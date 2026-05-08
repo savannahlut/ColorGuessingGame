@@ -25,6 +25,9 @@ struct ContentView: View {
     @State private var tolerance: Double = 20
     @State private var customText: String = ""
     
+    @State private var currentInput: String = ""
+    @State private var submittedText: String = ""
+    
     let difficulty: String
     
     var body: some View {
@@ -57,6 +60,9 @@ struct ContentView: View {
                     
                     TextField("Enter a guess...", text: $customText)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .onSubmit {
+                            submittedText = currentInput
+                        }
                     
                     Divider()
                         .overlay(selectedColor)
