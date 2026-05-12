@@ -24,3 +24,8 @@ func callAPI(r: Int, g: Int, b: Int) async throws -> ColorResponse?{
     }
     return nil
 }
+
+func fetchColorResponse(from url: URL) async throws -> ColorResponse? {
+    let (data, _) = try await URLSession.shared.data(from: url)
+    return try JSONDecoder().decode(ColorResponse.self, from: data)
+}

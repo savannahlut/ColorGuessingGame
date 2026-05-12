@@ -13,8 +13,6 @@ final class ScoreModel: ObservableObject {
     @Published var score: Int = 0
 }
 
-//Main View
-
 struct ContentView: View {
     @EnvironmentObject private var scoreModel: ScoreModel
     @StateObject private var viewModel = ColorViewModel()
@@ -25,8 +23,12 @@ struct ContentView: View {
     @State private var tolerance: Double = 20
     @State private var customText: String = ""
     
+    @State private var currentTask: Task<Void, Never>?
+    
     @State private var currentInput: String = ""
     @State private var submittedText: String = ""
+    
+    @State private var testHex = "#FFFFFF"
     
     let difficulty: String
     
@@ -58,11 +60,15 @@ struct ContentView: View {
                     Divider()
                         .overlay(selectedColor)
                     
-                    TextField("Enter a guess...", text: $customText)
+                    TextField("Enter a guess...", text: $currentInput)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .onSubmit {
-                            submittedText = currentInput
+                            submittedText = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
                         }
+                    
+                    Text(submittedText)
+                    
+                    Text(testHex)
                     
                     Divider()
                         .overlay(selectedColor)
@@ -70,6 +76,27 @@ struct ContentView: View {
                 .padding()
             }
         }
+        .onChange(of: submittedText) { newValue in
+                    guard !newValue.isEmpty else { return }
+                    
+                    currentTask?.cancel()
+                    
+                    currentTask = Task {
+                        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        do {
+                            let color = try await ColorNameCheck.color(for: trimmed)
+                            
+                            await MainActor.run {
+                                testHex = color.toHex() ?? "No hex"
+                            }
+                        } catch {
+                            await MainActor.run {
+                                testHex = "Error: \(error.localizedDescription)"
+                            }
+                        }
+                    }
+                }
     }
 }
 
