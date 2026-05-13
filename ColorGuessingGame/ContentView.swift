@@ -34,6 +34,13 @@ struct ContentView: View {
     @State private var tolerance: Double = 20
     @State private var customText: String = ""
     
+    @State private var currentTask: Task<Void, Never>?
+    
+    @State private var currentInput: String = ""
+    @State private var submittedText: String = ""
+    
+    @State private var testHex = "#FFFFFF"
+    
     let difficulty: String
     
     var body: some View {
@@ -62,65 +69,47 @@ struct ContentView: View {
 
                     Text("HEX: \(hexValue)")
                         .font(.headline)
-                        .padding(.bottom, 8)
                     
-                    Button("Guess") {
-                        let ui = UIColor(selectedColor)
-                        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-                        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
-                        let entry = StoredColor(
-                            red: Double(r),
-                            green: Double(g),
-                            blue: Double(b),
-                            hex: hexValue
-                        )
-                        storedColors.append(entry)
-                    }
-                    .buttonStyle(.borderedProminent)
-
                     Divider()
-
-                    if storedColors.isEmpty {
-                        Text("No guesses yet. Tap Guess to store the current color.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Your Guesses")
-                                .font(.headline)
-
-                            ScrollView {
-                                LazyVStack(spacing: 12) {
-                                    ForEach(storedColors) { item in
-                                        HStack(spacing: 12) {
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(Color(red: item.red, green: item.green, blue: item.blue))
-                                                .frame(width: 44, height: 44)
-                                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(.secondary.opacity(0.4)))
-
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(item.hex)
-                                                    .font(.headline)
-                                                Text(String(format: "R: %.0f  G: %.0f  B: %.0f",
-                                                            item.red * 255, item.green * 255, item.blue * 255))
-                                                    .font(.caption)
-                                                    .foregroundStyle(.secondary)
-                                            }
-                                            Spacer()
-                                        }
-                                        .padding(8)
-                                        .background(.thinMaterial)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: 100)
+                        .overlay(selectedColor)
+                    
+                    TextField("Enter a guess...", text: $currentInput)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .onSubmit {
+                            submittedText = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
                         }
-                    }
+                    
+                    Text(submittedText)
+                    
+                    Text(testHex)
+                    
+                    Divider()
+                        .overlay(selectedColor)
                 }
                 .padding()
             }
         }
+        .onChange(of: submittedText) { newValue in
+                    guard !newValue.isEmpty else { return }
+                    
+                    currentTask?.cancel()
+                    
+                    currentTask = Task {
+                        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        do {
+                            let color = try await ColorNameCheck.color(for: trimmed)
+                            
+                            await MainActor.run {
+                                testHex = color.toHex() ?? "No hex"
+                            }
+                        } catch {
+                            await MainActor.run {
+                                testHex = "Error: \(error.localizedDescription)"
+                            }
+                        }
+                    }
+                }
     }
 }
 

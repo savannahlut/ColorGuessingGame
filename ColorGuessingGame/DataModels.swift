@@ -8,8 +8,10 @@
 import SwiftUI
 import Foundation
 
-struct ColorResponse: Codable {
+struct ColorResponse: Decodable {
     var images: [Images]
+    let hex: Hex
+    struct Hex: Decodable { let value: String }
 }
 
 struct Images: Codable {
