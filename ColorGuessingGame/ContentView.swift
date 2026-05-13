@@ -39,6 +39,19 @@ struct ContentView: View {
     @State private var currentInput: String = ""
     @State private var submittedText: String = ""
     
+    // RGB input fields
+    @State private var rInput: String = ""
+    @State private var gInput: String = ""
+    @State private var bInput: String = ""
+
+    // Stored guess values
+    @State private var rGuess: Int? = nil
+    @State private var gGuess: Int? = nil
+    @State private var bGuess: Int? = nil
+
+    // Guess counter
+    @State private var guessesRemaining: Int = 3
+    
     @State private var testHex = "#FFFFFF"
     
     let difficulty: String
@@ -73,14 +86,68 @@ struct ContentView: View {
                     Divider()
                         .overlay(selectedColor)
                     
-                    TextField("Enter a guess...", text: $currentInput)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .onSubmit {
-                            submittedText = currentInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("R")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            TextField("0-255", text: $rInput)
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(maxWidth: 100)
                         }
-                    
-                    Text(submittedText)
-                    
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("G")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            TextField("0-255", text: $gInput)
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(maxWidth: 100)
+                        }
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("B")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            TextField("0-255", text: $bInput)
+                                .keyboardType(.numberPad)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(maxWidth: 100)
+                        }
+                    }
+
+                    Button("Enter a guess") {
+                        // Parse inputs and store guesses
+                        let r = Int(rInput.trimmingCharacters(in: .whitespacesAndNewlines))
+                        let g = Int(gInput.trimmingCharacters(in: .whitespacesAndNewlines))
+                        let b = Int(bInput.trimmingCharacters(in: .whitespacesAndNewlines))
+
+                        // Clamp values to 0-255 if convertible
+                        func clamped(_ value: Int?) -> Int? {
+                            guard let v = value else { return nil }
+                            return max(0, min(255, v))
+                        }
+
+                        rGuess = clamped(r)
+                        gGuess = clamped(g)
+                        bGuess = clamped(b)
+
+                        if guessesRemaining > 0 {
+                            guessesRemaining -= 1
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    // Display the stored guesses for debugging/feedback (optional)
+                    if let rGuess, let gGuess, let bGuess {
+                        Text("Stored guess: R=\(rGuess) G=\(gGuess) B=\(bGuess)")
+                            .font(.subheadline)
+                    }
+
+                    Text("Number of guesses: \(guessesRemaining)")
+                        .font(.headline)
+                        .padding(.top, 4)
+
                     Text(testHex)
                     
                     Divider()
@@ -89,27 +156,6 @@ struct ContentView: View {
                 .padding()
             }
         }
-        .onChange(of: submittedText) { newValue in
-                    guard !newValue.isEmpty else { return }
-                    
-                    currentTask?.cancel()
-                    
-                    currentTask = Task {
-                        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        do {
-                            let color = try await ColorNameCheck.color(for: trimmed)
-                            
-                            await MainActor.run {
-                                testHex = color.toHex() ?? "No hex"
-                            }
-                        } catch {
-                            await MainActor.run {
-                                testHex = "Error: \(error.localizedDescription)"
-                            }
-                        }
-                    }
-                }
     }
 }
 
