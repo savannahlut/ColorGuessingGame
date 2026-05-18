@@ -45,9 +45,11 @@ struct ContentView: View {
     @State private var gGuess: Int? = nil
     @State private var bGuess: Int? = nil
     
-    @State private var rTarget: Int? = nil
-    @State private var gTarget: Int? = nil
-    @State private var bTarget: Int? = nil
+    @State private var rTarget: Int = Int.random(in: 0...255)
+    @State private var gTarget: Int = Int.random(in: 0...255)
+    @State private var bTarget: Int = Int.random(in: 0...255)
+
+    @State private var guessAccuracy: Int? = nil
 
     @State private var guessesRemaining: Int = 3
     @State private var guessCorrect: Bool = false
@@ -66,6 +68,20 @@ struct ContentView: View {
                         .bold()
                         .padding(.top, 8)
 
+                    Spacer()
+
+                    // Target color square
+                    Rectangle()
+                        .fill(Color(red: Double(rTarget)/255.0,
+                                    green: Double(gTarget)/255.0,
+                                    blue: Double(bTarget)/255.0))
+                        .frame(width: 180, height: 180)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                        )
+                    
                     Spacer()
                     
                     ColorPicker("", selection: $selectedColor, supportsOpacity: false)
@@ -128,13 +144,25 @@ struct ContentView: View {
                         gGuess = clamped(g)
                         bGuess = clamped(b)
 
+                        // Compute accuracy if we have a full guess
+                        if let rGuess, let gGuess, let bGuess {
+                            let rAcc = max(0, 100 - abs(rGuess - rTarget))
+                            let gAcc = max(0, 100 - abs(gGuess - gTarget))
+                            let bAcc = max(0, 100 - abs(bGuess - bTarget))
+                            // Average the three channel accuracies
+                            let avg = (rAcc + gAcc + bAcc) / 3
+                            guessAccuracy = avg
+                        } else {
+                            guessAccuracy = nil
+                        }
+
                         if guessesRemaining > 0 {
                             guessesRemaining -= 1
                         }
                     }
                     .buttonStyle(.borderedProminent)
 
-                    if let rGuess, let gGuess, let bGuess, let rTarget, let gTarget, let bTarget {
+                    if let rGuess, let gGuess, let bGuess {
                         Text("Stored guess: R=\(rGuess) G=\(gGuess) B=\(bGuess)")
                             .font(.subheadline)
                     }
@@ -142,6 +170,25 @@ struct ContentView: View {
                     Text("Number of guesses: \(guessesRemaining)")
                         .font(.headline)
                         .padding(.top, 4)
+
+                    if let guessAccuracy {
+                        Text("Accuracy: \(guessAccuracy)%")
+                            .font(.title3)
+                            .bold()
+                    }
+                    
+                    if guessesRemaining == 0 {
+                        Button("New Color") {
+                            rTarget = Int.random(in: 0...255)
+                            gTarget = Int.random(in: 0...255)
+                            bTarget = Int.random(in: 0...255)
+                            guessesRemaining = 3
+                            guessAccuracy = nil
+                            rInput = ""
+                            gInput = ""
+                            bInput = ""
+                        }
+                    }
                     
                     Divider()
                         .overlay(selectedColor)
