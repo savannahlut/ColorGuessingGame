@@ -21,8 +21,6 @@ struct StoredColor: Identifiable, Codable {
     let hex: String
 }
 
-//Main View
-
 struct ContentView: View {
     @EnvironmentObject private var scoreModel: ScoreModel
     @StateObject private var viewModel = ColorViewModel()
@@ -39,20 +37,20 @@ struct ContentView: View {
     @State private var currentInput: String = ""
     @State private var submittedText: String = ""
     
-    // RGB input fields
     @State private var rInput: String = ""
     @State private var gInput: String = ""
     @State private var bInput: String = ""
 
-    // Stored guess values
     @State private var rGuess: Int? = nil
     @State private var gGuess: Int? = nil
     @State private var bGuess: Int? = nil
-
-    // Guess counter
-    @State private var guessesRemaining: Int = 3
     
-    @State private var testHex = "#FFFFFF"
+    @State private var rTarget: Int? = nil
+    @State private var gTarget: Int? = nil
+    @State private var bTarget: Int? = nil
+
+    @State private var guessesRemaining: Int = 3
+    @State private var guessCorrect: Bool = false
     
     let difficulty: String
     
@@ -117,12 +115,10 @@ struct ContentView: View {
                     }
 
                     Button("Enter a guess") {
-                        // Parse inputs and store guesses
                         let r = Int(rInput.trimmingCharacters(in: .whitespacesAndNewlines))
                         let g = Int(gInput.trimmingCharacters(in: .whitespacesAndNewlines))
                         let b = Int(bInput.trimmingCharacters(in: .whitespacesAndNewlines))
 
-                        // Clamp values to 0-255 if convertible
                         func clamped(_ value: Int?) -> Int? {
                             guard let v = value else { return nil }
                             return max(0, min(255, v))
@@ -138,8 +134,7 @@ struct ContentView: View {
                     }
                     .buttonStyle(.borderedProminent)
 
-                    // Display the stored guesses for debugging/feedback (optional)
-                    if let rGuess, let gGuess, let bGuess {
+                    if let rGuess, let gGuess, let bGuess, let rTarget, let gTarget, let bTarget {
                         Text("Stored guess: R=\(rGuess) G=\(gGuess) B=\(bGuess)")
                             .font(.subheadline)
                     }
@@ -147,8 +142,6 @@ struct ContentView: View {
                     Text("Number of guesses: \(guessesRemaining)")
                         .font(.headline)
                         .padding(.top, 4)
-
-                    Text(testHex)
                     
                     Divider()
                         .overlay(selectedColor)
