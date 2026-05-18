@@ -16,3 +16,9 @@ struct ColorGuessingGameApp: App {
         }
     }
 }
+
+#Preview{
+    MainMenuView()
+        .environmentObject(ScoreModel())
+}
+

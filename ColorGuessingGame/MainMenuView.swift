@@ -13,6 +13,7 @@ struct MainMenuView: View {
     @EnvironmentObject var scoreModel: ScoreModel
     @State private var selectedDifficulty: String = "Easy"
     @State private var shouldNavigate = false
+    @State private var dragOffset: CGFloat = 0
 
     var body: some View {
         NavigationStack {
@@ -42,18 +43,68 @@ struct MainMenuView: View {
                     .cornerRadius(8)
                 }
 
-                NavigationLink {
+                // Hidden navigation link driven by state
+                NavigationLink(isActive: $shouldNavigate) {
                     ContentView(difficulty: selectedDifficulty)
                         .environmentObject(scoreModel)
                 } label: {
-                    Text("Play")
-                        .font(.title2)
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 12)
-                        .background(.blue)
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
+                    EmptyView()
                 }
+                .hidden()
+
+                ZStack {
+                    // Background pill with instruction
+                    Capsule()
+                        .fill(Color.blue)
+                        .frame(height: 48)
+                        .overlay(
+                            Text("Swipe right to Play")
+                                .font(.headline)
+                                .foregroundStyle(.white.opacity(0.85))
+                        )
+
+                    // Draggable knob indicating swipe
+                    GeometryReader { geo in
+                        let width = geo.size.width
+                        let knobSize: CGFloat = 44
+                        let maxRightTravel = width/2 - knobSize/2 // centered origin in ZStack
+
+                        Circle()
+                            .fill(Color.white)
+                            .frame(width: knobSize, height: knobSize)
+                            .shadow(radius: 2)
+                            .offset(x: dragOffset)
+                            .overlay(
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.blue)
+                            )
+                            .gesture(
+                                DragGesture(minimumDistance: 5)
+                                    .onChanged { value in
+                                        // Move right only (positive x). Clamp so it doesn't go too far.
+                                        let x = max(0, value.translation.width)
+                                        dragOffset = min(maxRightTravel, x)
+                                    }
+                                    .onEnded { value in
+                                        // Trigger if dragged sufficiently right
+                                        if value.translation.width > 80 {
+                                            shouldNavigate = true
+                                            dragOffset = 0
+                                        } else {
+                                            // Animate back to center
+                                            withAnimation(.spring()) {
+                                                dragOffset = 0
+                                            }
+                                        }
+                                    }
+                            )
+                    }
+                    .padding(.horizontal, 4)
+                }
+                .frame(height: 48)
+                .clipShape(Capsule())
+                .accessibilityLabel("Swipe right to start the game")
+                .accessibilityHint("Drag the white circle to the right to play")
             }
             .padding()
         }
@@ -64,3 +115,4 @@ struct MainMenuView: View {
     MainMenuView()
         .environmentObject(ScoreModel())
 }
+
