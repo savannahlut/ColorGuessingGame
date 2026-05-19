@@ -22,9 +22,6 @@ struct MainMenuView: View {
                     .font(.largeTitle)
                     .bold()
                     .multilineTextAlignment(.center)
-
-                Text("Score: \(scoreModel.score)")
-                    .font(.title2)
                 
                 Menu {
                     Picker("Difficulty", selection: $selectedDifficulty) {
@@ -43,7 +40,6 @@ struct MainMenuView: View {
                     .cornerRadius(8)
                 }
 
-                // Hidden navigation link driven by state
                 NavigationLink(isActive: $shouldNavigate) {
                     ContentView(difficulty: selectedDifficulty)
                         .environmentObject(scoreModel)
@@ -53,7 +49,6 @@ struct MainMenuView: View {
                 .hidden()
 
                 ZStack {
-                    // Background pill with instruction
                     Capsule()
                         .fill(Color.blue)
                         .frame(height: 48)
@@ -63,11 +58,10 @@ struct MainMenuView: View {
                                 .foregroundStyle(.white.opacity(0.85))
                         )
 
-                    // Draggable knob indicating swipe
                     GeometryReader { geo in
                         let width = geo.size.width
                         let knobSize: CGFloat = 44
-                        let maxRightTravel = width/2 - knobSize/2 // centered origin in ZStack
+                        let maxRightTravel = width/2 - knobSize/2
 
                         Circle()
                             .fill(Color.white)
@@ -81,17 +75,17 @@ struct MainMenuView: View {
                             .gesture(
                                 DragGesture(minimumDistance: 5)
                                     .onChanged { value in
-                                        // Move right only (positive x). Clamp so it doesn't go too far.
+
                                         let x = max(0, value.translation.width)
                                         dragOffset = min(maxRightTravel, x)
                                     }
                                     .onEnded { value in
-                                        // Trigger if dragged sufficiently right
+
                                         if value.translation.width > 80 {
                                             shouldNavigate = true
                                             dragOffset = 0
                                         } else {
-                                            // Animate back to center
+
                                             withAnimation(.spring()) {
                                                 dragOffset = 0
                                             }
@@ -107,6 +101,8 @@ struct MainMenuView: View {
                 .accessibilityHint("Drag the white circle to the right to play")
             }
             .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.yellow)
         }
     }
 }
@@ -115,4 +111,3 @@ struct MainMenuView: View {
     MainMenuView()
         .environmentObject(ScoreModel())
 }
-
